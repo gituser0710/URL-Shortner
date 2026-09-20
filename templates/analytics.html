@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            background-color: #0d9488;
+            font-family: 'Space Grotesk', sans-serif;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            color: #000;
+        }
+        .brutal-box {
+            background-color: #ffffff;
+            border: 4px solid #000000;
+            border-radius: 16px;
+            box-shadow: 8px 8px 0px 0px #000000;
+        }
+        .brutal-button-secondary {
+            background-color: #ffffff;
+            border: 3px solid #000000;
+            border-radius: 8px;
+            box-shadow: 4px 4px 0px 0px #000000;
+            transition: all 0.2s;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .brutal-button-secondary:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px 0px #000000;
+        }
+        .brutal-button-secondary:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px 0px #000000;
+        }
+        .nav-container {
+            background-color: #ffffff;
+            border: 4px solid #000000;
+            border-radius: 12px;
+            box-shadow: 8px 8px 0px 0px #000000;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stat-card {
+            background-color: #fde047;
+            border: 4px solid #000000;
+            border-radius: 12px;
+            box-shadow: 6px 6px 0px 0px #000000;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card.blue { background-color: #93c5fd; }
+        .stat-card.pink { background-color: #f9a8d4; }
+        
+        .brutal-progress-bg {
+            background-color: #e5e7eb;
+            border: 2px solid #000;
+            height: 16px;
+            border-radius: 8px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .brutal-progress-fill {
+            background-color: #000;
+            height: 100%;
+            border-right: 2px solid #000;
+        }
+        .brutal-table-sm {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .brutal-table-sm td {
+            border-bottom: 2px solid #000;
+            padding: 0.75rem 0;
+            font-weight: bold;
+        }
+        .brutal-table-sm tr:last-child td {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-7xl mx-auto">
+
+        <div class="nav-container">
+            <h2 class="text-2xl font-bold uppercase tracking-tight m-0">Global Dashboard</h2>
+            <div class="flex gap-4">
+                <a href="{{ url_for('index') }}" class="brutal-button-secondary px-4 py-2 no-underline inline-block">Back to Home</a>
+            </div>
+        </div>
+
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="stat-card">
+                <i class="fa-solid fa-mouse-pointer absolute -bottom-4 -right-4 text-7xl opacity-20"></i>
+                <h3 class="text-lg font-bold mb-2 uppercase tracking-wider border-b-2 border-black inline-block">Total Clicks</h3>
+                <div class="text-5xl font-bold mt-4">{{ total_clicks }}</div>
+            </div>
+
+            <div class="stat-card blue">
+                <i class="fa-solid fa-link absolute -bottom-4 -right-4 text-7xl opacity-20"></i>
+                <h3 class="text-lg font-bold mb-2 uppercase tracking-wider border-b-2 border-black inline-block">Total Links</h3>
+                <div class="text-5xl font-bold mt-4">{{ total_links }}</div>
+            </div>
+
+            <div class="stat-card pink">
+                <i class="fa-solid fa-fire absolute -bottom-4 -right-4 text-7xl opacity-20"></i>
+                <h3 class="text-lg font-bold mb-2 uppercase tracking-wider border-b-2 border-black inline-block">Max Clicks</h3>
+                <div class="text-5xl font-bold mt-4">{{ top_link_clicks }}</div>
+            </div>
+        </div>
+
+
+        <div class="brutal-box p-6 mb-8 relative">
+            <div class="absolute -top-4 -left-4 w-12 h-12 rounded-full border-4 border-black z-0 bg-yellow-300"></div>
+            <h3 class="text-2xl font-bold mb-6 flex items-center gap-3 relative z-10">
+                <i class="fa-solid fa-chart-line"></i> Clicks Over Time (7 Days)
+            </h3>
+            <div class="w-full h-72">
+                <canvas id="clicksChart"></canvas>
+            </div>
+        </div>
+
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+
+            <div class="brutal-box p-6">
+                <h3 class="text-xl font-bold mb-6 flex items-center gap-3 border-b-4 border-black pb-3">
+                    <i class="fa-solid fa-trophy"></i> Top Links
+                </h3>
+                <div class="space-y-6">
+                    {% for link in top_links %}
+                    <div>
+                        <div class="flex justify-between font-bold text-sm mb-2">
+                            <span class="truncate pr-4" title="{{ link['original_url'] }}">
+                                {{ host_url }}{{ link['short_code'] }}
+                            </span>
+                            <span class="whitespace-nowrap">{{ link['clicks'] }} clicks</span>
+                        </div>
+                        <div class="brutal-progress-bg">
+                            <div class="brutal-progress-fill" style="width: {{ (link['clicks'] / top_link_clicks * 100) if top_link_clicks > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="font-bold border-2 border-black p-3 bg-gray-100">No links yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+
+            <div class="brutal-box p-6">
+                <h3 class="text-xl font-bold mb-6 flex items-center gap-3 border-b-4 border-black pb-3">
+                    <i class="fa-solid fa-globe"></i> Top Referrers
+                </h3>
+                <div class="space-y-6">
+                    {% for ref in referrers %}
+                    <div>
+                        <div class="flex justify-between font-bold text-sm mb-2">
+                            <span class="truncate pr-4 flex items-center gap-2">
+                                <i class="fa-solid fa-link"></i> {{ ref['referrer'] }}
+                            </span>
+                            <span>{{ ref['c'] }}</span>
+                        </div>
+                        <div class="brutal-progress-bg">
+                            <div class="brutal-progress-fill bg-blue-500" style="width: {{ (ref['c'] / total_clicks * 100) if total_clicks > 0 else 0 }}%"></div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="font-bold border-2 border-black p-3 bg-gray-100">No referrers recorded yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+
+            <div class="brutal-box p-6 flex flex-col">
+                <h3 class="text-xl font-bold mb-6 flex items-center gap-3 border-b-4 border-black pb-3">
+                    <i class="fa-solid fa-laptop-mobile"></i> Devices & Browsers
+                </h3>
+                
+                <div class="mb-6">
+                    <h4 class="font-bold uppercase tracking-widest text-sm mb-2 bg-yellow-200 inline-block px-2 border-2 border-black">Platform</h4>
+                    <table class="brutal-table-sm">
+                        <tbody>
+                            {% for p in platforms %}
+                            <tr>
+                                <td><i class="fa-solid fa-microchip mr-2"></i>{{ p['platform'] }}</td>
+                                <td class="text-right text-xl">{{ p['c'] }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td class="text-gray-500">No data</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex-grow">
+                    <h4 class="font-bold uppercase tracking-widest text-sm mb-2 bg-pink-200 inline-block px-2 border-2 border-black">Browser</h4>
+                    <table class="brutal-table-sm">
+                        <tbody>
+                            {% for b in browsers %}
+                            <tr>
+                                <td><i class="fa-brands fa-chrome mr-2"></i>{{ b['browser'] }}</td>
+                                <td class="text-right text-xl">{{ b['c'] }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td class="text-gray-500">No data</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.addEventListener('load', function() {
+            const ctx = document.getElementById('clicksChart').getContext('2d');
+            
+            const labels = {{ labels | tojson | safe }};
+            const data = {{ data_points | tojson | safe }};
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Clicks',
+                        data: data,
+                        borderColor: '#000000',
+                        backgroundColor: '#fde047',
+                        borderWidth: 4,
+                        pointBackgroundColor: '#ef4444',
+                        pointBorderColor: '#000000',
+                        pointBorderWidth: 3,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointHoverBackgroundColor: '#ef4444',
+                        fill: true,
+                        tension: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#000000',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            titleFont: { family: "'Space Grotesk', sans-serif", size: 14 },
+                            bodyFont: { family: "'Space Grotesk', sans-serif", size: 16, weight: 'bold' },
+                            padding: 12,
+                            displayColors: false,
+                            cornerRadius: 0,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' Clicks';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: '#000000',
+                                drawBorder: true,
+                                lineWidth: 2,
+                                drawTicks: true
+                            },
+                            ticks: {
+                                color: '#000000',
+                                font: { family: "'Space Grotesk', sans-serif", weight: 'bold', size: 14 }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: '#000000',
+                                drawBorder: true,
+                                lineWidth: 2
+                            },
+                            ticks: {
+                                color: '#000000',
+                                font: { family: "'Space Grotesk', sans-serif", weight: 'bold', size: 14 },
+                                stepSize: 1
+                            },
+                            beginAtZero: true
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index',
+                    },
+                }
+            });
+        });
+    </script>
+</body>
+</html>
