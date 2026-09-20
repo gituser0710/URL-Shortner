@@ -21,8 +21,6 @@ This is a fully-featured URL Shortener web application. While the initial expect
 
 ## Screenshots
 
-*(Note: Please insert your screenshots below!)*
-
 - **Home / URL Creation Page:** `![img.png](img.png)`
 - **QR Code & Success View:** `![img_1.png](img_1.png)`
 - **Global Analytics Dashboard:** `![img_3.png](img_3.png)`
